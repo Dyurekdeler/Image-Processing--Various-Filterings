@@ -1,35 +1,54 @@
 import tkinter
+from tkinter import filedialog
+
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 # Implement the default Matplotlib key bindings.
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
 
 import numpy as np
 
 class GUI():
 
     def __init__(self):
-        root = tkinter.Tk()
-        root.wm_title("Embedding in Tk")
+        self.root = tkinter.Tk()
+        self.root.wm_title("Densy's Image World")
 
-        fig = Figure(figsize=(5, 4), dpi=100)
-        t = np.arange(0, 3, .01)
-        fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+        self.canvas = FigureCanvasTkAgg(self.load(), master=self.root)  # A tk.DrawingArea.
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.root)
+        self.toolbar.update()
+        self.canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        toolbar = NavigationToolbar2Tk(canvas, root)
-        toolbar.update()
-        canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        self.canvas.mpl_connect("key_press_event", self.on_key_press)
 
-        canvas.mpl_connect("key_press_event", self.on_key_press)
-        button = tkinter.Button(master=root, text="Quit", command=self._quit)
-        button.pack(side=tkinter.BOTTOM)
+        quitbtn = tkinter.Button(master=self.root, text="Quit", command=self._quit)
+        quitbtn.pack(side=tkinter.BOTTOM)
+
+        browsebtn = tkinter.Button(self.root, text="Browse A File", command=self.browse)
+        browsebtn.pack()
 
         tkinter.mainloop()
+
+    def load(self, filename):
+        imarray = mpimg.imread('winnie.png')
+        plt.imshow(imarray)
+        fig = Figure(figsize=(5, 4), dpi=100)
+        t = np.arange(0, 3, .01)
+        # fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+        a = fig.add_subplot(111)
+        a.imshow(imarray)
+        return fig
+
+    def browse(self):
+        filename = filedialog.askopenfilename(initialdir="/", title="Select A File", filetype=
+        (("jpeg files", "*.jpg"), ("all files", "*.*")))
+        self.load(filename)
 
     def on_key_press(self, event):
         print("you pressed {}".format(event.key))
