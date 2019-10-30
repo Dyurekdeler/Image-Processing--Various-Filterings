@@ -44,6 +44,7 @@ class GUI():
         a = fig.add_subplot(111)
         a.imshow(imarray)
         return fig
+    #lalala
 
     def browse(self):
         filename = filedialog.askopenfilename(initialdir="/", title="Select A File", filetype=
