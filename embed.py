@@ -75,10 +75,13 @@ class GUI():
             canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
     def browse(self,a,canvas,mode):
-        filename = filedialog.askopenfilename(initialdir="/", title="Select A File", filetype=
+        filename = filedialog.askopenfilename(initialdir="/home/denizyu/Pictures", title="Select A File", filetypes=
         (("jpeg files", "*.jpg"), ("all files", "*.*")))
         self.activeFilename = filename
         self.load(filename,a,canvas,mode)
+
+    def rgb2gray(rgb):
+        return np.dot(rgb[..., :3], [0.299, 0.587, 0.144])
 
     def load(self, filename,a,canvas,mode):
         imarray = mpimg.imread(filename)
@@ -119,28 +122,37 @@ class GUI():
             a.imshow(motionblur)
 
         elif mode == 'find_edges':
-            edgey = generic_gradient_magnitude(imarray, sobel)
+            """does not work with 3d"""
+            gray = rgb2gray(imarray)
+            edgey = generic_gradient_magnitude(gray, sobel)
             plt.imshow(imarray)
             t = np.arange(0, 3, .01)
             a.imshow(edgey)
 
         elif mode == 'contrast':
-            plt.imshow(imarray, vmin=30, vmax=200)
+            """does not work with 3d
+            gray = rgb2gray(imarray)
+            plt.imshow(gray, vmin=30, vmax=200)
             t = np.arange(0, 3, .01)
-            a.imshow(imarray)
+            a.imshow(gray, cmap="gray")"""
+            # -----Converting image to LAB Color model-----------------------------------
+
 
         elif mode == 'contour':
+            gray = rgb2gray(imarray)
             plt.imshow(imarray)
-            plt.contour(imarray, [50, 200])
+            plt.contour(gray, [50, 200])
             t = np.arange(0, 3, .01)
-            a.imshow(imarray)
+            a.imshow(gray, cmap="gray")
+
         #HISTOGRAM
         elif mode == 'crop':
-            crop = imarray[77:141, 57:121]
+            """does not work with 3d"""
+            gray = rgb2gray(imarray)
+            crop = gray[30:141, 15:121]
             plt.imshow(imarray)
-            plt.contour(imarray, [50, 200])
             t = np.arange(0, 3, .01)
-            a.imshow(crop)
+            a.imshow(crop, cmap="gray")
         canvas.draw()
 
 
