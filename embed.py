@@ -64,11 +64,9 @@ class GUI():
 
                                     "mean",
 
-                                    "histogram",
+                                    "histogram","equalization",
 
-                                    "erosion","dilation","opening",
-
-                                    "opencv"])
+                                    "erosion","dilation","opening","closing","morp_gradient","top_hat","black_hat"])
         combo.current(0)
 
         combo.bind("<<ComboboxSelected>>", self.callbackFunc)
@@ -256,6 +254,12 @@ class GUI():
             plt.hist(gray.ravel(), 256, [0, 256])
             plt.show()
 
+        elif mode == 'equalization':
+            img = cv2.imread(filename, 0)
+            gray = rgb2gray(img)
+            equ = cv2.equalizeHist(gray)
+            a.imshow(equ, cmap='gray')
+
         elif mode == "opencv":
             img = cv2.imread(filename)
             color = ('b', 'g', 'r')
@@ -269,22 +273,46 @@ class GUI():
             kernel = np.ones((5, 5), np.uint8)
             erosion = cv2.erode(imarray, kernel, iterations=1)
             plt.imshow(imarray)
-            t = np.arange(0, 3, .01)
+
             a.imshow(erosion)
 
         elif mode == 'dilation':
             kernel = np.ones((5, 5), np.uint8)
             dilation = cv2.dilate(imarray,kernel,iterations = 1)
             plt.imshow(imarray)
-            t = np.arange(0, 3, .01)
+
             a.imshow(dilation)
 
         elif mode == 'opening':
             kernel = np.ones((5, 5), np.uint8)
             erosion = cv2.erode(imarray, kernel, iterations=1)
             plt.imshow(imarray)
-            t = np.arange(0, 3, .01)
+
             a.imshow(erosion)
+        elif mode == 'closing':
+            kernel = np.ones((5, 5), np.uint8)
+            closing = cv2.morphologyEx(imarray, cv2.MORPH_CLOSE, kernel)
+            plt.imshow(imarray)
+
+            a.imshow(closing)
+
+        elif mode == 'morp_gradient':
+            kernel = np.ones((5, 5), np.uint8)
+            gradient = cv2.morphologyEx(imarray, cv2.MORPH_GRADIENT, kernel)
+            plt.imshow(imarray)
+            a.imshow(gradient)
+
+        elif mode == 'top_hat':
+            kernel = np.ones((5, 5), np.uint8)
+            tophat = cv2.morphologyEx(imarray, cv2.MORPH_TOPHAT, kernel)
+            plt.imshow(imarray)
+            a.imshow(tophat)
+
+        elif mode == 'black_hat':
+            kernel = np.ones((5, 5), np.uint8)
+            blackhat = cv2.morphologyEx(imarray, cv2.MORPH_BLACKHAT, kernel)
+            plt.imshow(imarray)
+            a.imshow(blackhat)
 
         canvas.draw()
 
