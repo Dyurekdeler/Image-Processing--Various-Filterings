@@ -66,7 +66,9 @@ class GUI():
 
                                     "histogram",
 
-                                    "erosion"])
+                                    "erosion","dilation","opening",
+
+                                    "opencv"])
         combo.current(0)
 
         combo.bind("<<ComboboxSelected>>", self.callbackFunc)
@@ -91,38 +93,11 @@ class GUI():
         self.activeFilename = filename
         self.load(filename,a,canvas,mode)
 
-    def rgb2gray(rgb):
-        return np.dot(rgb[..., :3], [0.299, 0.587, 0.144])
-
-    def plot_img_and_hist(image, axes, bins=256):
-        """Plot an image along with its histogram and cumulative histogram."""
-        image = img_as_float(image)
-        ax_img, ax_hist = axes
-        ax_cdf = ax_hist.twinx()
-
-        # Display image
-        ax_img.imshow(image, cmap=plt.cm.gray)
-        ax_img.set_axis_off()
-
-        # Display histogram
-        ax_hist.hist(image.ravel(), bins=bins, histtype='step', color='black')
-        ax_hist.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
-        ax_hist.set_xlabel('Pixel intensity')
-        ax_hist.set_xlim(0, 1)
-        ax_hist.set_yticks([])
-
-        # Display cumulative distribution
-        img_cdf, bins = exposure.cumulative_distribution(image, bins)
-        ax_cdf.plot(bins, img_cdf, 'r')
-        ax_cdf.set_yticks([])
-
-        return ax_img, ax_hist, ax_cdf
 
     def load(self, filename,a,canvas,mode):
         imarray = mpimg.imread(filename)
         if mode == 'default':
-            plt.imshow(imarray)
-            t = np.arange(0, 3, .01)
+
             a.imshow(imarray)
 
         elif mode == 'gray':
@@ -276,17 +251,40 @@ class GUI():
             a.imshow(new_image)
 
         elif mode == 'histogram':
-            """im = cv2.imread(filename)
-            vals=im.mean(axis=2).flatten()
-            counts, bins = np.histogram(vals,range(257))
-            plt.bar(bins[:-1] - 0.5, counts, width=1 , edgecolor="none")
-            plt.xlim([-0.5, 255.5])
-            plt.show()"""
-            img = plt.imread(filename)  # reads image data
-            plt.hist(img.flatten(), 256, [0, 256]);
+            img = cv2.imread(filename, 0)
+            gray = rgb2gray(img)
+            plt.hist(gray.ravel(), 256, [0, 256])
             plt.show()
 
+        elif mode == "opencv":
+            img = cv2.imread(filename)
+            color = ('b', 'g', 'r')
+            for i, col in enumerate(color):
+                histr = cv2.calcHist([img], [i], None, [256], [0, 256])
+                plt.plot(histr, color=col)
+                plt.xlim([0, 256])
+            plt.show()
 
+        elif mode == 'erosion':
+            kernel = np.ones((5, 5), np.uint8)
+            erosion = cv2.erode(imarray, kernel, iterations=1)
+            plt.imshow(imarray)
+            t = np.arange(0, 3, .01)
+            a.imshow(erosion)
+
+        elif mode == 'dilation':
+            kernel = np.ones((5, 5), np.uint8)
+            dilation = cv2.dilate(imarray,kernel,iterations = 1)
+            plt.imshow(imarray)
+            t = np.arange(0, 3, .01)
+            a.imshow(dilation)
+
+        elif mode == 'opening':
+            kernel = np.ones((5, 5), np.uint8)
+            erosion = cv2.erode(imarray, kernel, iterations=1)
+            plt.imshow(imarray)
+            t = np.arange(0, 3, .01)
+            a.imshow(erosion)
 
         canvas.draw()
 
