@@ -49,11 +49,11 @@ class GUI():
         browsebtn = tkinter.Button(self.root, text="Browse A File", command= lambda: self.browse(a, canvas, 'default'))
         browsebtn.pack()
 
-        label = tkinter.Label(self.root, text="Enter your weight in pounds.")
-        label.pack()
+        intensitylabel = tkinter.Label(self.root, text="Enter intensity level")
+        intensitylabel.pack()
 
-        self.weight_in_kg = tkinter.StringVar()
-        tkinter.Entry(self.root, textvariable=self.weight_in_kg).pack()
+        self.intelvl = tkinter.StringVar()
+        tkinter.Entry(self.root, textvariable=self.intelvl).pack()
 
         combo = ttk.Combobox(self.root,
                                     values=[
@@ -73,6 +73,7 @@ class GUI():
         combo.pack()
         self.combobox = combo
 
+
         applybtn = tkinter.Button(self.root, text="Apply",
                                  command=lambda: self.load(self.activeFilename, a, canvas, self.combobox.get()))
         applybtn.pack()
@@ -83,13 +84,16 @@ class GUI():
             canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
     def callbackFunc(self, event):
-        print("New Element is = "+ self.combobox.get()+" : "+ self.weight_in_kg.get())
+        print("New Element is = "+ self.combobox.get()+" : "+ self.intelvl.get())
 
     def browse(self,a,canvas,mode):
         filename = filedialog.askopenfilename(initialdir="/home/denizyu/Pictures", title="Select A File", filetypes=
         (("jpeg files", "*.jpg"), ("all files", "*.*")))
         self.activeFilename = filename
-        self.load(filename,a,canvas,mode)
+        if filename.endswith('.mp4'):
+            self.loadvideo(filename,a,canvas)
+        else:
+            self.load(filename,a,canvas,mode)
 
     def load(self, filename,a,canvas,mode):
         imarray = mpimg.imread(filename)
@@ -198,12 +202,11 @@ class GUI():
 
         #INTENSITY ADJUSTMENT
         elif mode == 'intensity':
-                gamma = self.weight_in_kg.get()
-                # Apply gamma correction.
-                gamma_corrected = np.array(255 * (imarray / 255) ** gamma, dtype='uint8')
-                a.imshow(gamma_corrected)
+            gamma = float(self.intelvl.get())
+            gamma_corrected = np.array(255*(imarray / 255) ** gamma, dtype = 'uint8')
+            a.imshow(gamma_corrected)
 
-                #HISTOGRAM AND EQUALIZATION
+        #HISTOGRAM AND EQUALIZATION
         elif mode == 'histogram':
             img = cv2.imread(filename, 0)
             gray = rgb2gray(img)
@@ -256,6 +259,34 @@ class GUI():
 
         canvas.draw()
 
+    def loadvideo(self,filename,a,canvas):
+        cap = cv2.VideoCapture(filename)
+        # Read until video is completed
+        while (cap.isOpened()):
+            # Capture frame-by-frame
+            ret, frame = cap.read()
+            if ret == True:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                blurred = cv2.GaussianBlur(frame, (5,5), 0)
+                laplacian = cv2.Laplacian(blurred, cv2.CV_64F)
+                canny = cv2.Canny(blurred,100,150)
+
+                # Display the resulting frame
+                numpy_horizontal = np.hstack((laplacian, canny))
+                numpy_horizontal_concat = np.concatenate((laplacian, canny), axis=1)
+                cv2.imshow('Original and Laplacian and Canny', numpy_horizontal)
+                cv2.imshow('Original', frame)
+
+                # Press Q on keyboard to  exit
+                if cv2.waitKey(25) & 0xFF == ord('q'):
+                    break
+
+            # Break the loop
+            else:
+                break
+
+        # When everything done, release the video capture object
+        cap.release()
     def _quit(self):
         self.root.quit()     # stops mainloop
         self.root.destroy()  # this is necessary on Windows to prevent
