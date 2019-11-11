@@ -43,40 +43,78 @@ class GUI():
         canvas.draw()
         canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        quitbtn = tkinter.Button(master=self.root, text="Quit", command=self._quit)
-        quitbtn.pack(side=tkinter.BOTTOM)
+        browseframe = tkinter.Frame(self.root)
+        browseframe.pack()
 
-        browsebtn = tkinter.Button(self.root, text="Browse A File", command= lambda: self.browse(a, canvas, 'default'))
-        browsebtn.pack()
+        browselabel = tkinter.Label(browseframe, text="Please Choose a File")
+        browselabel.pack(side=tkinter.TOP)
 
-        intensitylabel = tkinter.Label(self.root, text="Enter intensity level")
-        intensitylabel.pack()
+        browsebtn = tkinter.Button(browseframe, text="Browse an Image", command= lambda: self.browse(a, canvas, 'default','img'))
+        browsebtn.pack(side=tkinter.LEFT)
 
-        self.intelvl = tkinter.StringVar()
-        tkinter.Entry(self.root, textvariable=self.intelvl).pack()
+        browsevidbtn = tkinter.Button(browseframe, text="Browse an Video", command=lambda: self.browse(a, canvas, 'default','vid'))
+        browsevidbtn.pack(side=tkinter.RIGHT)
 
-        combo = ttk.Combobox(self.root,
+        basicsframe = tkinter.Frame(self.root)
+        basicsframe.pack()
+
+        basicslabel = tkinter.Label(basicsframe, text="Choose an Filter")
+        basicslabel.pack(side=tkinter.TOP)
+
+        combo = ttk.Combobox(basicsframe,
                                     values=[
-                                        "gray","very_blurry","sharp","mean",
+                                        "gray","blurry","sharp","mean",
                                         "motion_blur","lighten","darken","invert","gaussian",
                                         "percentile_mean","bilateral_mean",'find_edges',
 
-                                        "crop","rescale","resize","downscaled","rotate","swirl",
-                                    
                                         "intensity",
+
+                                        "rescale","resize","downscaled","rotate","swirl",
 
                                         "histogram","equalization",
 
                                         "erosion","dilation","opening","closing","morp_gradient","top_hat","black_hat"])
         combo.current(0)
         combo.bind("<<ComboboxSelected>>", self.callbackFunc)
-        combo.pack()
+        combo.pack(side=tkinter.LEFT)
         self.combobox = combo
 
-
-        applybtn = tkinter.Button(self.root, text="Apply",
+        applybtn = tkinter.Button(basicsframe, text="Apply",
                                  command=lambda: self.load(self.activeFilename, a, canvas, self.combobox.get()))
-        applybtn.pack()
+        applybtn.pack(side=tkinter.RIGHT)
+
+        self.optional = tkinter.StringVar()
+        entry = tkinter.Entry(basicsframe, textvariable=self.optional)
+        entry.insert(0, 'Optinal Value')
+        entry.pack(side=tkinter.LEFT)
+
+        cropxframe = tkinter.Frame(self.root)
+        cropxframe.pack()
+        cropyframe = tkinter.Frame(self.root)
+        cropyframe.pack()
+        xlabel = tkinter.Label(cropxframe, text="Enter X Interval")
+        xlabel.pack(side=tkinter.TOP)
+
+        ylabel = tkinter.Label(cropyframe, text="Enter Y Interval")
+        ylabel.pack(side=tkinter.TOP)
+
+        self.x1 = tkinter.StringVar()
+        tkinter.Entry(cropxframe, textvariable=self.x1).pack(side=tkinter.LEFT)
+        self.x2 = tkinter.StringVar()
+        tkinter.Entry(cropxframe, textvariable=self.x2).pack(side=tkinter.RIGHT)
+        self.y1 = tkinter.StringVar()
+        tkinter.Entry(cropyframe, textvariable=self.y1).pack(side=tkinter.LEFT)
+        self.y2 = tkinter.StringVar()
+        tkinter.Entry(cropyframe, textvariable=self.y2).pack(side=tkinter.RIGHT)
+
+        cropbtn = tkinter.Button(self.root, text="Crop Image", command=lambda: self.load(self.activeFilename,a, canvas, 'crop'))
+        cropbtn.pack()
+
+        originalbtn = tkinter.Button(self.root, text="Set Back Original Image", command= lambda : self.load(self.activeFilename, a, canvas, 'default'))
+        originalbtn.pack()
+
+        quitbtn = tkinter.Button(master=self.root, text="Quit", command=self._quit)
+        quitbtn.pack(side=tkinter.BOTTOM)
 
         if(self.activeCanvas is None):
             toolbar = NavigationToolbar2Tk(canvas, self.root)
@@ -84,20 +122,24 @@ class GUI():
             canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
     def callbackFunc(self, event):
-        print("New Element is = "+ self.combobox.get()+" : "+ self.intelvl.get())
+        print("New Element is = "+ self.combobox.get()+"intensity level is : "+ self.intelvl.get()+" optional value is : "+ self.optional.get())
 
-    def browse(self,a,canvas,mode):
-        filename = filedialog.askopenfilename(initialdir="/home/denizyu/Pictures", title="Select A File", filetypes=
-        (("jpeg files", "*.jpg"), ("all files", "*.*")))
-        self.activeFilename = filename
-        if filename.endswith('.mp4'):
-            self.loadvideo(filename,a,canvas)
+    def browse(self,a,canvas,mode, filetype):
+        if filetype == 'img':
+            filename = filedialog.askopenfilename(initialdir="/home/denizyu/Pictures", title="Select A File", filetypes=
+            (("jpeg files", "*.jpg"), ("png files", "*.png")))
+            self.load(filename, a, canvas, mode)
         else:
-            self.load(filename,a,canvas,mode)
+            filename = filedialog.askopenfilename(initialdir="/home/denizyu/Pictures", title="Select A File", filetypes=(("MP4 files", "*.mp4"),
+                                                                                         ("WMV files", "*.wmv"), ("AVI files", "*.avi")))
+            self.loadvideo(filename, a, canvas)
+        self.activeFilename = filename
+
 
     def load(self, filename,a,canvas,mode):
         imarray = mpimg.imread(filename)
         plt.close('all')
+
         if mode == 'default':
             a.imshow(imarray)
 
@@ -106,16 +148,24 @@ class GUI():
             gray = rgb2gray(imarray)
             a.imshow(gray, cmap=plt.cm.gray)
 
-        elif mode == 'very_blurry':
-            very_blurred = ndimage.uniform_filter(imarray, size=(11, 11, 1))
-            a.imshow(very_blurred)
+        elif mode == 'blurry':
+            value=11
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+
+            blurred = ndimage.uniform_filter(imarray, size=(value, value, 1))
+            a.imshow(blurred)
 
         elif mode == 'sharp':
+            # optional
             sharp = unsharp_mask(imarray, radius=5, amount=2)
             a.imshow(sharp)
 
         elif mode == 'motion_blur':
             size = 50
+            if self.RepresentsFloat(self.optional.get()):
+                size = int(self.optional.get())
+
             # generating the kernel
             kernel_motion_blur = np.zeros((size, size))
             kernel_motion_blur[int((size - 1) / 2), :] = np.ones(size)
@@ -142,11 +192,17 @@ class GUI():
             a.imshow(edge)
 
         elif mode == "lighten":
-            image = cv2.add(imarray, np.array([50.0]))
+            size = 50.0
+            if self.RepresentsFloat(self.optional.get()):
+                size = float(self.optional.get())
+            image = cv2.add(imarray, np.array([size]))
             a.imshow(image)
 
         elif mode == "darken":
-            image = cv2.subtract(imarray, np.array([50.0]))
+            size = 50.0
+            if self.RepresentsFloat(self.optional.get()):
+                size = float(self.optional.get())
+            image = cv2.subtract(imarray, np.array([size]))
             a.imshow(image)
 
         elif mode == "invert":
@@ -154,6 +210,7 @@ class GUI():
             a.imshow(image)
 
         elif mode == "gaussian":
+            #optional
             image = gaussian_filter(imarray, sigma=1)
             a.imshow(image)
 
@@ -171,19 +228,34 @@ class GUI():
 
         #SPATIAL
         elif mode == 'crop':
-            """does not work with 3d"""
+            axes_x1 = 30
+            axes_x2 = 140
+            axes_y1 = 15
+            axes_y2 = 140
+            if self.RepresentsFloat(self.x1.get()) and self.RepresentsFloat(self.x2.get()) and self.RepresentsFloat(self.y1.get()) and self.RepresentsFloat(self.y2.get()) :
+                axes_x1 = int(self.x1.get())
+                axes_x2 = int(self.x2.get())
+                axes_y1 = int(self.y1.get())
+                axes_y2 = int(self.y2.get())
             gray = rgb2gray(imarray)
-            crop = gray[30:141, 15:140]
+            crop = gray[axes_x1:axes_x2, axes_y1:axes_y2]
             a.imshow(crop, cmap="gray")
 
         elif mode == 'rescale':
+            size = 0.25
+            if self.RepresentsFloat(self.optional.get()):
+                size = float(self.optional.get())
             gray= rgb2gray(imarray)
-            image_rescaled = rescale(gray, 0.25, anti_aliasing=False)
+            image_rescaled = rescale(gray, size, anti_aliasing=False)
             a.imshow(image_rescaled, cmap='gray')
 
         elif mode == 'resize':
-            gray= rgb2gray(imarray)
-            image_resized = resize(gray, (gray.shape[0] // 4, gray.shape[1] // 4),
+            size = 4
+            if self.RepresentsFloat(self.optional.get()):
+                size = int(self.optional.get())
+
+            gray = rgb2gray(imarray)
+            image_resized = resize(gray, (gray.shape[0] // size, gray.shape[1] // size),
                                    anti_aliasing=True)
             a.imshow(image_resized, cmap='gray')
 
@@ -193,16 +265,24 @@ class GUI():
             a.imshow(image_downscaled, cmap='gray')
 
         elif mode == 'rotate':
-            new_pic = rotate(imarray, 180)
+            size = 180
+            if self.RepresentsFloat(self.optional.get()):
+                size = int(self.optional.get())
+            new_pic = rotate(imarray, size)
             a.imshow(new_pic)
 
         elif mode == 'swirl':
-            swirled = swirl(imarray, rotation=0, strength=10, radius=250)
+            size = 250
+            if self.RepresentsFloat(self.optional.get()):
+                size = int(self.optional.get())
+            swirled = swirl(imarray, rotation=0, strength=10, radius=size)
             a.imshow(swirled)
 
         #INTENSITY ADJUSTMENT
         elif mode == 'intensity':
-            gamma = float(self.intelvl.get())
+            gamma = 1.5
+            if self.RepresentsFloat(self.optional.get()):
+                gamma = float(self.optional.get())
             gamma_corrected = np.array(255*(imarray / 255) ** gamma, dtype = 'uint8')
             a.imshow(gamma_corrected)
 
@@ -267,9 +347,9 @@ class GUI():
             ret, frame = cap.read()
             if ret == True:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                blurred = cv2.GaussianBlur(frame, (5,5), 0)
+                blurred = cv2.GaussianBlur(frame, (5, 5), 0)
                 laplacian = cv2.Laplacian(blurred, cv2.CV_64F)
-                canny = cv2.Canny(blurred,100,150)
+                canny = cv2.Canny(blurred, 100, 150)
 
                 # Display the resulting frame
                 numpy_horizontal = np.hstack((laplacian, canny))
@@ -284,11 +364,19 @@ class GUI():
             # Break the loop
             else:
                 break
-
         # When everything done, release the video capture object
         cap.release()
+
     def _quit(self):
         self.root.quit()     # stops mainloop
         self.root.destroy()  # this is necessary on Windows to prevent
+
+    def RepresentsFloat(self, s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+
 
 GUI()
