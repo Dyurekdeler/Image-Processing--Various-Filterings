@@ -1,23 +1,16 @@
 import tkinter
 from tkinter import filedialog
 from tkinter import ttk
-import skimage
-from scipy.ndimage import gaussian_filter
 from skimage import io; io.use_plugin('matplotlib')
-from skimage import img_as_float, data
-from skimage.exposure import exposure
 from skimage.transform import rescale, resize, downscale_local_mean, swirl
 import cv2
-from skimage.filters import rank
 from scipy import ndimage
 from scipy.ndimage import generic_gradient_magnitude, rotate
 from skimage.color import rgb2gray
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-from skimage.morphology import disk
 import numpy as np
 from skimage.filters import unsharp_mask, sobel
 
@@ -62,7 +55,7 @@ class GUI():
                                     values=[
                                         "gray","blurry","sharp","mean",
                                         "motion_blur","lighten","darken","invert","gaussian",
-                                        "percentile_mean","bilateral_mean",'find_edges',
+                                        "bilateral_mean",'find_edges',
 
                                         "intensity",
 
@@ -129,7 +122,7 @@ class GUI():
         else:
             filename = filedialog.askopenfilename(initialdir="/home/denizyu/Pictures", title="Select A File", filetypes=(("MP4 files", "*.mp4"),
                                                                                          ("WMV files", "*.wmv"), ("AVI files", "*.avi")))
-            self.loadvideo(filename, a, canvas)
+            self.loadvideo(filename)
         self.activeFilename = filename
 
     def load(self, filename,a,canvas,mode):
@@ -154,8 +147,10 @@ class GUI():
             a.imshow(blurred)
 
         elif mode == 'sharp':
-            # optional
-            sharp = unsharp_mask(imarray, radius=5, amount=2)
+            value = 5
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+            sharp = unsharp_mask(imarray, radius=value, amount=2)
             a.imshow(sharp)
 
         elif mode == 'motion_blur':
@@ -209,13 +204,6 @@ class GUI():
             image = cv2.GaussianBlur(imarray, (size, size), 0)
             a.imshow(image)
 
-        elif mode == "percentile_mean":
-            ##### bu nedir böyle ######
-            gray = rgb2gray(imarray)
-            selem = disk(20)
-            percentile_result = rank.mean_percentile(gray, selem=selem, p0=.1, p1=.9)
-            a.imshow(percentile_result, cmap="gray")
-
         elif mode == "bilateral_mean":
             size = 30
             if self.RepresentsFloat(self.optional.get()):
@@ -257,8 +245,11 @@ class GUI():
             a.imshow(image_resized, cmap='gray')
 
         elif mode == 'downscaled':
+            value = 4
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
             gray= rgb2gray(imarray)
-            image_downscaled = downscale_local_mean(gray, (4, 3))
+            image_downscaled = downscale_local_mean(gray, (value, 3))
             a.imshow(image_downscaled, cmap='gray')
 
         elif mode == 'rotate':
@@ -300,43 +291,64 @@ class GUI():
 
         #MORPHOLOGICAL
         elif mode == 'erosion':
-            kernel = np.ones((5, 5), np.uint8)
+            value = 5
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+            kernel = np.ones((value, value), np.uint8)
             erosion = cv2.erode(imarray, kernel, iterations=1)
             a.imshow(erosion)
 
         elif mode == 'dilation':
-            kernel = np.ones((5, 5), np.uint8)
+            value = 5
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+            kernel = np.ones((value, value), np.uint8)
             dilation = cv2.dilate(imarray,kernel,iterations = 1)
             a.imshow(dilation)
 
         elif mode == 'opening':
-            kernel = np.ones((5, 5), np.uint8)
+            value = 5
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+            kernel = np.ones((value, value), np.uint8)
             opening = cv2.morphologyEx(imarray, cv2.MORPH_OPEN, kernel)
             a.imshow(opening)
 
         elif mode == 'closing':
-            kernel = np.ones((5, 5), np.uint8)
+            value = 5
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+            kernel = np.ones((value, value), np.uint8)
             closing = cv2.morphologyEx(imarray, cv2.MORPH_CLOSE, kernel)
             a.imshow(closing)
 
         elif mode == 'morp_gradient':
-            kernel = np.ones((5, 5), np.uint8)
+            value = 5
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+            kernel = np.ones((value, value), np.uint8)
             gradient = cv2.morphologyEx(imarray, cv2.MORPH_GRADIENT, kernel)
             a.imshow(gradient)
 
         elif mode == 'top_hat':
-            kernel = np.ones((5, 5), np.uint8)
+            value = 5
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+            kernel = np.ones((value, value), np.uint8)
             tophat = cv2.morphologyEx(imarray, cv2.MORPH_TOPHAT, kernel)
             a.imshow(tophat)
 
         elif mode == 'black_hat':
-            kernel = np.ones((5, 5), np.uint8)
+            value = 5
+            if self.RepresentsFloat(self.optional.get()):
+                value = int(self.optional.get())
+            kernel = np.ones((value, value), np.uint8)
             blackhat = cv2.morphologyEx(imarray, cv2.MORPH_BLACKHAT, kernel)
             a.imshow(blackhat)
 
         canvas.draw()
 
-    def loadvideo(self,filename,a,canvas):
+    def loadvideo(self,filename):
         cap = cv2.VideoCapture(filename)
         # Read until video is completed
         while (cap.isOpened()):
@@ -351,8 +363,7 @@ class GUI():
                 # Display the resulting frame
                 numpy_horizontal = np.hstack((laplacian, canny))
                 numpy_horizontal_concat = np.concatenate((laplacian, canny), axis=1)
-                cv2.imshow('Original and Laplacian and Canny', numpy_horizontal)
-                cv2.imshow('Original', frame)
+                cv2.imshow('Laplacian and Canny', numpy_horizontal)
 
                 # Press Q on keyboard to  exit
                 if cv2.waitKey(25) & 0xFF == ord('q'):
