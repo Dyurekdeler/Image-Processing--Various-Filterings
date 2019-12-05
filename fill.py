@@ -41,13 +41,6 @@ im_out = im_th | im_floodfill_inv
 
 h,w,bpp = np.shape(im_out)
 pixels = im_floodfill_inv
-for i in range(im_in.size[0]):
-    for j in range(im_in.size[1]):
-            if pixels[i,j] == (225, 225, 225):
-                pixels[i,j] = (1)
-            elif pixels[i,j] == (76, 76, 76):
-                pixels [i,j] = (2)
-            else: pixels[i,j] = (0)
 
 # Display images.
 cv2.imshow("Blob Detection Image", im_th)
