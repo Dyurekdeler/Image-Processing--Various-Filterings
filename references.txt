@@ -1,5 +1,0 @@
-GUI : https://www.pythonforthelab.com/blog/step-by-step-guide-to-building-a-gui/
-
-Matplot Tutorial : https://www.pyimagesearch.com/2014/11/03/display-matplotlib-rgb-image/
-
-https://answers.opencv.org/question/97416/replace-a-range-of-colors-with-a-specific-color-in-python/
